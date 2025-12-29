@@ -1,0 +1,40 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: inventory-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: inventory-management
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build: ./nodejs
+    container_name: inventory-backend
+    restart: always
+    ports:
+      - "5001:5000"
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/inventory-management
+      - JWT_SECRET=your-secret-key-change-this-in-production
+      - NODE_ENV=production
+      - FRONTEND_URL=http://localhost:3000
+    depends_on:
+      - mongo
+
+  frontend:
+    build:
+      context: ./reactjs
+      args:
+        VITE_API_URL: http://localhost:5001/api
+    container_name: inventory-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
